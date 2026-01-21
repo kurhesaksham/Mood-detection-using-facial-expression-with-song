@@ -22,8 +22,4 @@ An AI-based application that detects a user’s mood from facial expressions and
 ---
 
 
-├── youtube/
-│   └── youtube_player.py      
-│
-└── data/
-    └── mood_model.h5          
+
