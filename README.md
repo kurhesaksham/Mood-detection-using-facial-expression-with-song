@@ -9,33 +9,19 @@ An AI-based application that detects a user’s mood from facial expressions and
 - 🎭 Real-time **facial emotion detection**  
 - 🎶 Automatic **song recommendation** based on mood  
 - 📷 **Webcam-based live input**  
-- 🌐 Fetch songs from **YouTube** or local storage  
+- 🌐 Fetch songs from **YouTube**   
 - 📊 Simple **Streamlit interface**  
 
 ---
 
 ## 🛠️ Tech Stack  
 - **Language**: Python  
-- **Libraries**: OpenCV,TensorFlow,FER,Streamlit,numpy,
-- **Database**: Firebase 
+- **Libraries**: OpenCV,TensorFlow,FER,Streamlit,numpy,Flask
+- **Database**: Firebase
 
 ---
 
-## 📂 Project Structure  
-mood_music_app/
-│
-├── app.py                    
-├── requirements.txt
-│
-├── auth/
-│   ├── db.py                   
-│   ├── login.py               
-│   ├── signup.py              
-│   └── _init_.py
-│
-├── model/
-│   └── mood_detector.py      
-│
+
 ├── youtube/
 │   └── youtube_player.py      
 │
