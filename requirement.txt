@@ -1,0 +1,12 @@
+streamlit
+opencv-python
+numpy
+pandas
+tensorflow
+keras
+fer
+mtcnn
+firebase-admin
+google-api-python-client
+python-dotenv
+requests 
