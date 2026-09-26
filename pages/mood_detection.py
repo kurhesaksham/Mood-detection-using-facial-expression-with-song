@@ -5,8 +5,21 @@ from collections import Counter
 from utils.model_loader import load_emotion_model
 from auth.backend import update_user_mood
 from youtube.youtubePlayer import get_mood_video
+from firebase_admin import auth
 
 st.set_page_config(page_title="Mood Detection", page_icon="🎭")
+
+st.subheader("Forgot Password?")
+
+email = st.text_input("Enter your registered email")
+
+if st.button("Send Reset Link"):
+    try:
+        link = auth.generate_password_reset_link(email)
+        st.success("Password reset link generated.")
+        st.info("You can use the generated link to reset the password.")
+    except Exception as e:
+        st.error("Unable to generate password reset link.")
 
 # ---------------- LOGIN CHECK ----------------
 if "uid" not in st.session_state or not st.session_state.uid:
