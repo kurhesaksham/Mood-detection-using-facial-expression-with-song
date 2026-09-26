@@ -23,19 +23,6 @@ with tab1:
         with st.spinner("Preparing your experience..."):
             result = login_user(email, password)
 
-            def reset_password(email):
-                try:
-                    link = auth.generate_password_reset_link(email)
-                    return {
-                        "success": True,
-                        "link": link
-                    }
-                except Exception as e:
-                    return {
-                        "success": False,
-                        "message": str(e)
-                    }
-
             if result.get("success"):
                 # 🔥 Preload model during login
                 load_emotion_model()
