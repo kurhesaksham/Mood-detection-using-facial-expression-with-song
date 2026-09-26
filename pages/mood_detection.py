@@ -1,14 +1,18 @@
 import streamlit as st
 import cv2
-import time
+import numpy as np
+from PIL import Image
 from collections import Counter
+
 from utils.model_loader import load_emotion_model
 from auth.backend import update_user_mood
 from youtube.youtubePlayer import get_mood_video
 
 
-st.set_page_config(page_title="Mood Detection", page_icon="🎭")
-
+st.set_page_config(
+    page_title="Mood Detection",
+    page_icon="🎭"
+)
 
 
 # ---------------- LOGIN CHECK ----------------
@@ -18,10 +22,12 @@ if "uid" not in st.session_state or not st.session_state.uid:
 
 uid = st.session_state.uid
 
-# ---------------- LOAD MODEL (CACHED) ----------------
+
+# ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def get_model():
     return load_emotion_model()
+
 
 emotion_detector = get_model()
 
@@ -29,72 +35,110 @@ if emotion_detector is None:
     st.error("Emotion model failed to load.")
     st.stop()
 
+
 # ---------------- SESSION STATES ----------------
 defaults = {
     "language_selected": False,
     "preferred_language": None,
-    "detecting": False,
     "final_mood": None,
+    "detecting": False,
 }
 
 for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
+
 # ---------------- LOGOUT ----------------
 if st.button("Logout"):
     st.session_state.clear()
     st.switch_page("app.py")
 
-# ---------------- LANGUAGE SELECTION ----------------
+
+# =========================================================
+# LANGUAGE SELECTION
+# =========================================================
+
 if not st.session_state.language_selected:
 
-    st.title("Select Preferred Language")
+    st.title("🎭 Mood Detection")
 
-    language = st.selectbox("Language", ["English", "Hindi", "Marathi"])
+    st.subheader("Select Preferred Language")
+
+    language = st.selectbox(
+        "Language",
+        ["English", "Hindi", "Marathi"]
+    )
 
     if st.button("Continue"):
+
         st.session_state.preferred_language = language
         st.session_state.language_selected = True
         st.session_state.detecting = True
+
         st.rerun()
 
-# ---------------- MOOD DETECTION ----------------
+
+# =========================================================
+# CAMERA / MOOD DETECTION
+# =========================================================
+
 elif st.session_state.detecting:
 
-    st.title("Detecting Mood...")
+    st.title("🎭 Mood Detection")
 
-    cap = cv2.VideoCapture(0)
+    st.write(
+        "Allow camera access and take a photo so we can detect your mood."
+    )
 
-    if not cap.isOpened():
-        st.error("Camera not accessible.")
-        st.stop()
+    camera_image = st.camera_input(
+        "Take a picture"
+    )
 
-    detected_emotions = []
-    frame_placeholder = st.empty()
+    if camera_image is not None:
 
-    DETECTION_TIME = 8
-    start_time = time.time()
+        with st.spinner("Detecting your mood..."):
 
-    try:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
+            # Read uploaded camera image
+            image = Image.open(camera_image)
 
-            # 🔥 Use better resolution (important fix)
-            small = cv2.resize(frame, (320, 240))
-            scale_x = frame.shape[1] / 320
-            scale_y = frame.shape[0] / 240
+            # Convert PIL image to NumPy
+            frame = np.array(image)
 
-            emotions = emotion_detector.detect_emotions(small)
+            # Convert RGB → BGR for OpenCV / FER
+            frame_bgr = cv2.cvtColor(
+                frame,
+                cv2.COLOR_RGB2BGR
+            )
+
+            # Resize for faster detection
+            small = cv2.resize(
+                frame_bgr,
+                (320, 240)
+            )
+
+            # Detect emotions
+            emotions = emotion_detector.detect_emotions(
+                small
+            )
+
+            detected_emotions = []
+
+            # Scale coordinates back to original image
+            scale_x = frame_bgr.shape[1] / 320
+            scale_y = frame_bgr.shape[0] / 240
 
             for face in emotions:
-                mood = max(face["emotions"], key=face["emotions"].get)
+
+                mood = max(
+                    face["emotions"],
+                    key=face["emotions"].get
+                )
+
                 confidence = face["emotions"][mood]
 
-                # 🔥 Lower confidence threshold (important fix)
                 if confidence > 0.3:
+
                     detected_emotions.append(mood)
 
                     x, y, w, h = face["box"]
@@ -104,62 +148,116 @@ elif st.session_state.detecting:
                     w = int(w * scale_x)
                     h = int(h * scale_y)
 
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                    cv2.rectangle(
+                        frame_bgr,
+                        (x, y),
+                        (x + w, y + h),
+                        (0, 255, 0),
+                        2
+                    )
+
                     cv2.putText(
-                        frame,
+                        frame_bgr,
                         f"{mood} ({confidence:.2f})",
-                        (x, y - 10),
+                        (x, max(y - 10, 20)),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.8,
                         (0, 255, 0),
-                        2,
+                        2
                     )
 
-            frame_placeholder.image(
-                cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            )
+            # ---------------- FINAL MOOD ----------------
 
-            if time.time() - start_time > DETECTION_TIME:
-                break
+            if detected_emotions:
 
-    finally:
-        cap.release()
+                final_mood = Counter(
+                    detected_emotions
+                ).most_common(1)[0][0]
 
-    # ---------------- FINAL MOOD ----------------
-    if detected_emotions:
-        final_mood = Counter(detected_emotions).most_common(1)[0][0]
-        st.session_state.final_mood = final_mood
-        update_user_mood(uid, final_mood)
-    else:
-        st.session_state.final_mood = None
+                st.session_state.final_mood = final_mood
 
-    st.session_state.detecting = False
-    st.rerun()
+                update_user_mood(
+                    uid,
+                    final_mood
+                )
 
-# ---------------- RESULT PAGE ----------------
+                st.session_state.detecting = False
+
+                st.success(
+                    f"Detected Mood: {final_mood.upper()}"
+                )
+
+                # Show detected image
+                result_image = cv2.cvtColor(
+                    frame_bgr,
+                    cv2.COLOR_BGR2RGB
+                )
+
+                st.image(
+                    result_image,
+                    caption="Detected Emotion",
+                    use_container_width=True
+                )
+
+                st.rerun()
+
+            else:
+
+                st.warning(
+                    "No face or stable emotion was detected. "
+                    "Please try again with your face clearly visible."
+                )
+
+
+# =========================================================
+# RESULT PAGE
+# =========================================================
+
 else:
 
-    st.title("Detection Result")
+    st.title("🎵 Detection Result")
 
     mood = st.session_state.final_mood
     language = st.session_state.preferred_language
 
     if mood:
-        st.success(f"Detected Mood: {mood.upper()}")
-        st.write(f"Preferred Language: {language}")
+
+        st.success(
+            f"Detected Mood: {mood.upper()}"
+        )
+
+        st.write(
+            f"Preferred Language: {language}"
+        )
 
         with st.spinner("Fetching music..."):
-            video_url = get_mood_video(mood, language)
+
+            video_url = get_mood_video(
+                mood,
+                language
+            )
 
         if video_url:
+
+            st.subheader("🎵 Recommended Song")
+
             st.video(video_url)
+
         else:
-            st.error("No video found for this mood.")
+
+            st.error(
+                "No video found for this mood."
+            )
 
     else:
-        st.warning("No stable emotion detected.")
 
-    if st.button("Detect Again"):
+        st.warning(
+            "No stable emotion detected."
+        )
+
+    if st.button("🔄 Detect Again"):
+
         st.session_state.detecting = True
         st.session_state.final_mood = None
+
         st.rerun()
