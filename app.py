@@ -7,12 +7,13 @@ st.set_page_config(
     page_icon="🎭"
 )
 
-st.title("🎭Mood Detection Using Facial Expressions with Song")
+st.title("🎭 Mood Detection Using Facial Expressions with Song")
 
 if "uid" not in st.session_state:
     st.session_state.uid = None
 
 tab1, tab2 = st.tabs(["Login", "Sign Up"])
+
 
 # ---------------- LOGIN ----------------
 with tab1:
@@ -24,7 +25,7 @@ with tab1:
             result = login_user(email, password)
 
             if result.get("success"):
-                # 🔥 Preload model during login
+                # Preload model during login
                 load_emotion_model()
 
                 st.session_state.uid = result["uid"]
@@ -32,11 +33,51 @@ with tab1:
             else:
                 st.error(result.get("message", "Login failed"))
 
+    # ---------------- FORGOT PASSWORD ----------------
+    st.divider()
+
+    st.subheader("Forgot Password?")
+
+    reset_email = st.text_input(
+        "Enter your registered email",
+        key="reset_email"
+    )
+
+    if st.button("Send Password Reset Link"):
+        if not reset_email:
+            st.warning("Please enter your email.")
+        else:
+            result = reset_password(reset_email)
+
+            if result.get("success"):
+                st.success("Password reset link generated.")
+                st.info("Please use the reset link to create a new password.")
+            else:
+                st.error(
+                    result.get(
+                        "message",
+                        "Password reset failed."
+                    )
+                )
+
+
 # ---------------- SIGNUP ----------------
 with tab2:
-    email = st.text_input("Email", key="signup_email")
-    password = st.text_input("Password", type="password", key="signup_pass")
-    confirm = st.text_input("Confirm Password", type="password")
+    email = st.text_input(
+        "Email",
+        key="signup_email"
+    )
+
+    password = st.text_input(
+        "Password",
+        type="password",
+        key="signup_pass"
+    )
+
+    confirm = st.text_input(
+        "Confirm Password",
+        type="password"
+    )
 
     if st.button("Sign Up"):
         if password != confirm:
@@ -45,6 +86,13 @@ with tab2:
             result = register_user(email, password)
 
             if result.get("success"):
-                st.success("Account created successfully. Please login.")
+                st.success(
+                    "Account created successfully. Please login."
+                )
             else:
-                st.error(result.get("message", "Registration failed"))
+                st.error(
+                    result.get(
+                        "message",
+                        "Registration failed"
+                    )
+                )
