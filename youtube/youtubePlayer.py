@@ -1,26 +1,11 @@
-
+import random
 import streamlit as st
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 
 
 @st.cache_resource
 def get_youtube():
-    """
-    Create YouTube API client using only the API key.
-    No Firebase/Google OAuth credentials are used here.
-    """
-
-    # Read API key from Streamlit secrets
-    try:
-        api_key = st.secrets["YOUTUBE_API_KEY"]
-    except KeyError:
-        st.error("YOUTUBE_API_KEY is missing from Streamlit Secrets.")
-        return None
-
-    if not api_key:
-        st.error("YOUTUBE_API_KEY is empty.")
-        return None
+    api_key = st.secrets["YOUTUBE_API_KEY"]
 
     return build(
         "youtube",
@@ -30,12 +15,9 @@ def get_youtube():
     )
 
 
-def get_mood_video(mood, language):
+def get_mood_video(mood, language, previous_video_id=None):
 
     youtube = get_youtube()
-
-    if youtube is None:
-        return None
 
     queries = {
         "English": {
@@ -66,40 +48,47 @@ def get_mood_video(mood, language):
         }
     }
 
-    language_queries = queries.get(
+    query = queries.get(
         language,
         queries["English"]
-    )
-
-    query = language_queries.get(
+    ).get(
         mood.lower(),
         "music"
     )
 
     try:
+
         response = youtube.search().list(
-            part="snippet",
             q=query,
+            part="snippet",
             type="video",
-            maxResults=1
+            maxResults=10
         ).execute()
 
         items = response.get("items", [])
 
-        if not items:
+        videos = []
+
+        for item in items:
+
+            video_id = item.get("id", {}).get("videoId")
+
+            if video_id:
+
+                # Don't use the previous song
+                if video_id != previous_video_id:
+                    videos.append(video_id)
+
+        if not videos:
             return None
 
-        video_id = items[0]["id"].get("videoId")
+        # Pick a different video
+        selected_video = random.choice(videos)
 
-        if not video_id:
-            return None
-
-        return f"https://www.youtube.com/watch?v={video_id}"
-
-    except HttpError as e:
-        st.error(f"YouTube API error: {e}")
-        return None
+        return f"https://www.youtube.com/watch?v={selected_video}"
 
     except Exception as e:
-        st.error(f"Unable to fetch YouTube video: {e}")
+
+        st.error(f"YouTube API error: {e}")
+
         return None
