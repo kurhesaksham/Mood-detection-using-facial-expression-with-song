@@ -15,14 +15,40 @@ def register_user(email, password):
         return {"success": False, "message": str(e)}
 
 def login_user(email, password):
-    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={API_KEY}"
-    payload = {"email": email, "password": password, "returnSecureToken": True}
-    res = requests.post(url, json=payload).json()
+    try:
+        url = (
+            "https://identitytoolkit.googleapis.com/v1/"
+            f"accounts:signInWithPassword?key={API_KEY}"
+        )
 
-    if "localId" in res:
-        return {"success": True, "uid": res["localId"]}
-    else:
-        return {"success": False, "message": "Login failed"}
+        payload = {
+            "email": email,
+            "password": password,
+            "returnSecureToken": True
+        }
+
+        response = requests.post(url, json=payload)
+        data = response.json()
+
+        if "localId" in data:
+            return {
+                "success": True,
+                "uid": data["localId"]
+            }
+
+        error = data.get("error", {})
+        message = error.get("message", "Unknown Firebase error")
+
+        return {
+            "success": False,
+            "message": message
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
 
 def reset_password(email):
     try:
