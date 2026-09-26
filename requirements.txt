@@ -10,3 +10,4 @@ firebase-admin
 google-api-python-client
 python-dotenv
 requests
+setuptools<81
