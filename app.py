@@ -1,5 +1,5 @@
 import streamlit as st
-from auth.auth_backend import login_user, register_user
+from auth.auth_backend import login_user, register_user, reset_password
 from utils.model_loader import load_emotion_model
 
 st.set_page_config(
@@ -22,6 +22,19 @@ with tab1:
     if st.button("Login"):
         with st.spinner("Preparing your experience..."):
             result = login_user(email, password)
+
+            def reset_password(email):
+                try:
+                    link = auth.generate_password_reset_link(email)
+                    return {
+                        "success": True,
+                        "link": link=
+                    }
+                except Exception as e:
+                    return {
+                        "success": False,
+                        "message": str(e)
+                    }
 
             if result.get("success"):
                 # 🔥 Preload model during login
