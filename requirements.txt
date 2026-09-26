@@ -1,12 +1,12 @@
 streamlit
-opencv-contrib-python-headless==4.13.0.92
 numpy
 pandas
-tensorflow
-keras
-fer
+tensorflow==2.15.0
+keras==2.15.0
+fer==22.4.0
 mtcnn
+opencv-contrib-python-headless==4.13.0.92
 firebase-admin
 google-api-python-client
 python-dotenv
-requests 
+requests
