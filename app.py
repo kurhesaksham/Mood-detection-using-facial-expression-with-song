@@ -1,9 +1,4 @@
 import streamlit as st
-st.markdown(
-    '<meta name="google-site-verification" '
-    'content="N3Gceyx1X1iTeGEaCPfx8iA1IopCy3UrT85e80envzQ" />',
-    unsafe_allow_html=True
-)
 from auth.auth_backend import login_user, register_user, reset_password
 from utils.model_loader import load_emotion_model
 
