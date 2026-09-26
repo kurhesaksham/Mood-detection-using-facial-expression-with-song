@@ -1,10 +1,10 @@
-import os
 import requests
+import streamlit as st
 from firebase_admin import auth
 from auth.db import db
 
 
-API_KEY = os.getenv("FIREBASE_API_KEY")
+API_KEY = st.secrets["FIREBASE_API_KEY"]
 
 def register_user(email, password):
     try:
