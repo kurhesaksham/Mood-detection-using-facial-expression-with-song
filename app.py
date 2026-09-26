@@ -51,11 +51,18 @@ with tab1:
 
             if result.get("success"):
                 st.success("Password reset link generated.")
+
                 st.link_button(
-                    "🔑 Reset Password"
+                    "🔑 Reset Password",
                     result["link"]
+                )
             else:
-                st.error(result.get("message", "Password reset failed."))
+                st.error(
+                    result.get(
+                        "message",
+                        "Password reset failed."
+                    )
+                )
 
 
 # ---------------- SIGNUP ----------------
