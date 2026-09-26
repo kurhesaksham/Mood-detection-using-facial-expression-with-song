@@ -23,3 +23,16 @@ def login_user(email, password):
         return {"success": True, "uid": res["localId"]}
     else:
         return {"success": False, "message": "Login failed"}
+
+def reset_password(email):
+    try:
+        link = auth.generate_password_reset_link(email)
+        return {
+            "success": True,
+            "link": link
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
