@@ -28,7 +28,7 @@ with tab1:
                     link = auth.generate_password_reset_link(email)
                     return {
                         "success": True,
-                        "link": link=
+                        "link": link
                     }
                 except Exception as e:
                     return {
